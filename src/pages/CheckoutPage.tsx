@@ -27,6 +27,8 @@ export default function CheckoutPage() {
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => { trackEvent(AnalyticsEvents.CHECKOUT_START); }, []);
+
   const formatPrice = (p: number) => p.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const actualDeliveryFee = orderType === 'delivery' ? deliveryFee : 0;
