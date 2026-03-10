@@ -10,7 +10,7 @@ import { CustomerCRM } from '@/components/admin/CustomerCRM';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
 
-type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'settings';
+type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'settings';
 
 export default function AdminDashboard() {
   const [view, setView] = useState<AdminView>('orders');
