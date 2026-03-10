@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { trackEvent, AnalyticsEvents } from '@/lib/analytics';
 import { ArrowLeft, MapPin, CreditCard, Banknote, QrCode, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { createOrder, createOrderItems, findOrCreateCustomer } from '@/lib/api';
+import { LoyaltyRedeem } from '@/components/checkout/LoyaltyRedeem';
 import { toast } from 'sonner';
 
 type OrderType = 'delivery' | 'pickup' | 'dine_in';
@@ -10,7 +12,7 @@ type PaymentMethod = 'pix' | 'cash' | 'card' | 'online';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { items, subtotal, discount, deliveryFee, total, clearCart, coupon } = useCart();
+  const { items, subtotal, discount, deliveryFee, total, clearCart, coupon, loyaltyPointsUsed, loyaltyDiscount } = useCart();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
@@ -24,6 +26,8 @@ export default function CheckoutPage() {
   const [changeFor, setChangeFor] = useState('');
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => { trackEvent(AnalyticsEvents.CHECKOUT_START); }, []);
 
   const formatPrice = (p: number) => p.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -101,6 +105,7 @@ export default function CheckoutPage() {
       })));
 
       clearCart();
+      trackEvent(AnalyticsEvents.ORDER_COMPLETE, { total: actualTotal, items: items.length });
       toast.success(`Pedido #${order.order_number} realizado com sucesso!`);
       navigate('/order-confirmation/' + order.id);
     } catch (err) {
@@ -194,10 +199,13 @@ export default function CheckoutPage() {
             className="w-full p-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground resize-none h-16 focus:outline-none focus:border-primary" />
         </section>
 
+        <LoyaltyRedeem customerPhone={phone} />
+
         <section className="bg-secondary/50 rounded-xl p-4 space-y-1.5 text-sm">
           <div className="flex justify-between text-muted-foreground"><span>Subtotal ({items.length} itens)</span><span>{formatPrice(subtotal)}</span></div>
           {orderType === 'delivery' && <div className="flex justify-between text-muted-foreground"><span>Entrega</span><span>{formatPrice(deliveryFee)}</span></div>}
-          {discount > 0 && <div className="flex justify-between text-success"><span>Desconto</span><span>-{formatPrice(discount)}</span></div>}
+          {loyaltyDiscount > 0 && <div className="flex justify-between text-primary"><span>Pontos fidelidade</span><span>-{formatPrice(loyaltyDiscount)}</span></div>}
+          {discount > 0 && <div className="flex justify-between text-success"><span>Desconto total</span><span>-{formatPrice(discount)}</span></div>}
           <div className="flex justify-between font-bold text-foreground pt-1.5 border-t border-border">
             <span>Total</span>
             <span className="text-primary">{formatPrice(actualTotal)}</span>

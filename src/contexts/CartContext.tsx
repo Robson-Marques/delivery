@@ -38,6 +38,10 @@ interface CartContextType {
   coupon: CouponData | null;
   applyCoupon: (code: string) => Promise<boolean>;
   removeCoupon: () => void;
+  loyaltyDiscount: number;
+  loyaltyPointsUsed: number;
+  applyLoyaltyPoints: (points: number) => void;
+  removeLoyaltyPoints: () => void;
   subtotal: number;
   discount: number;
   deliveryFee: number;
@@ -50,6 +54,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItemData[]>([]);
   const [coupon, setCoupon] = useState<CouponData | null>(null);
+  const [loyaltyPointsUsed, setLoyaltyPointsUsed] = useState(0);
   const deliveryFee = 5.99;
 
   const addItem = useCallback((item: CartItemData) => {
@@ -75,6 +80,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = useCallback(() => {
     setItems([]);
     setCoupon(null);
+    setLoyaltyPointsUsed(0);
   }, []);
 
   const applyCoupon = useCallback(async (code: string): Promise<boolean> => {
@@ -94,14 +100,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const removeCoupon = useCallback(() => setCoupon(null), []);
 
+  // 10 points = R$ 1.00 discount
+  const applyLoyaltyPoints = useCallback((points: number) => {
+    setLoyaltyPointsUsed(points);
+    toast.success(`${points} pontos aplicados!`);
+  }, []);
+
+  const removeLoyaltyPoints = useCallback(() => {
+    setLoyaltyPointsUsed(0);
+  }, []);
+
+  const loyaltyDiscount = loyaltyPointsUsed / 10;
+
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
-  const discount = coupon
+  const couponDiscount = coupon
     ? coupon.discountType === 'percentage'
       ? subtotal * (coupon.discountValue / 100)
       : coupon.discountValue
     : 0;
 
+  const discount = couponDiscount + loyaltyDiscount;
   const total = Math.max(0, subtotal - discount + deliveryFee);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -109,6 +128,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     <CartContext.Provider value={{
       items, addItem, removeItem, updateQuantity, updateObservations,
       clearCart, coupon, applyCoupon, removeCoupon,
+      loyaltyDiscount, loyaltyPointsUsed, applyLoyaltyPoints, removeLoyaltyPoints,
       subtotal, discount, deliveryFee, total, itemCount,
     }}>
       {children}

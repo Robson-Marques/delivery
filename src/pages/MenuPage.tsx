@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { trackEvent, AnalyticsEvents } from '@/lib/analytics';
 import { MenuHeader } from '@/components/menu/MenuHeader';
 import { HeroBanner } from '@/components/menu/HeroBanner';
 import { CategoryBar } from '@/components/menu/CategoryBar';
@@ -16,6 +17,8 @@ export default function MenuPage() {
   const [selectedPizza, setSelectedPizza] = useState<Product | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const { addItem, itemCount, total } = useCart();
+
+  useEffect(() => { trackEvent(AnalyticsEvents.MENU_VIEW); }, []);
 
   const { data: categories = [], isLoading: loadingCats } = useQuery({
     queryKey: ['categories'],
@@ -41,6 +44,7 @@ export default function MenuPage() {
   });
 
   const handleAddItem = (item: Product) => {
+    trackEvent(AnalyticsEvents.ADD_TO_CART, { product: item.name });
     if (item.is_pizza) {
       setSelectedPizza(item);
     } else {
