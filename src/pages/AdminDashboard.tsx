@@ -21,6 +21,7 @@ export default function AdminDashboard() {
 
   // Sound notification for new orders
   useNewOrderSound();
+  useAutoOpenClose();
 
   const navItems: { id: AdminView; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <BarChart3 className="w-4 h-4" /> },
