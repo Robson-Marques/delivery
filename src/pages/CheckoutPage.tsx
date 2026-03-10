@@ -105,6 +105,7 @@ export default function CheckoutPage() {
       })));
 
       clearCart();
+      trackEvent(AnalyticsEvents.ORDER_COMPLETE, { total: actualTotal, items: items.length });
       toast.success(`Pedido #${order.order_number} realizado com sucesso!`);
       navigate('/order-confirmation/' + order.id);
     } catch (err) {
