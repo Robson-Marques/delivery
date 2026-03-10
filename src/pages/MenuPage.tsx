@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { trackEvent, AnalyticsEvents } from '@/lib/analytics';
 import { MenuHeader } from '@/components/menu/MenuHeader';
 import { HeroBanner } from '@/components/menu/HeroBanner';
 import { CategoryBar } from '@/components/menu/CategoryBar';
