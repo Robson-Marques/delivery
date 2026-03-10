@@ -195,6 +195,8 @@ export default function CheckoutPage() {
             className="w-full p-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground resize-none h-16 focus:outline-none focus:border-primary" />
         </section>
 
+        <LoyaltyRedeem customerPhone={phone} />
+
         <section className="bg-secondary/50 rounded-xl p-4 space-y-1.5 text-sm">
           <div className="flex justify-between text-muted-foreground"><span>Subtotal ({items.length} itens)</span><span>{formatPrice(subtotal)}</span></div>
           {orderType === 'delivery' && <div className="flex justify-between text-muted-foreground"><span>Entrega</span><span>{formatPrice(deliveryFee)}</span></div>}
