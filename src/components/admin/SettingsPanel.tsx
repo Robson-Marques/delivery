@@ -80,6 +80,7 @@ export function SettingsPanel() {
 
   const tabs = [
     { id: 'general' as const, label: 'Geral' },
+    { id: 'hours' as const, label: 'Horários' },
     { id: 'neighborhoods' as const, label: 'Bairros' },
     { id: 'coupons' as const, label: 'Cupons' },
     { id: 'drivers' as const, label: 'Entregadores' },
