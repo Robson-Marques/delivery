@@ -70,6 +70,7 @@ export default function AdminDashboard() {
         {view === 'kitchen' && <KanbanBoard kitchenMode />}
         {view === 'products' && <ProductManager />}
         {view === 'reports' && <ReportsPanel />}
+        {view === 'customers' && <CustomerCRM />}
         {view === 'settings' && <SettingsPanel />}
       </main>
     </div>
