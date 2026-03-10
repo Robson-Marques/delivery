@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { trackEvent, AnalyticsEvents } from '@/lib/analytics';
 import { ArrowLeft, MapPin, CreditCard, Banknote, QrCode, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
