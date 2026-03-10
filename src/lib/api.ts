@@ -95,7 +95,9 @@ export async function findOrCreateCustomer(customerData: {
   return data;
 }
 
-export async function fetchOrders(status?: string) {
+type OrderStatus = Database['public']['Enums']['order_status'];
+
+export async function fetchOrders(status?: OrderStatus) {
   let query = supabase.from('orders').select('*').order('created_at', { ascending: false });
   if (status) query = query.eq('status', status);
   const { data, error } = await query;
