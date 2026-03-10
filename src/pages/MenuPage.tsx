@@ -7,6 +7,7 @@ import { CategoryBar } from '@/components/menu/CategoryBar';
 import { MenuItemCard } from '@/components/menu/MenuItemCard';
 import { PizzaCustomizer } from '@/components/menu/PizzaCustomizer';
 import { CartDrawer } from '@/components/menu/CartDrawer';
+import { ClosedBanner } from '@/components/menu/ClosedBanner';
 import { fetchCategories, fetchProducts, fetchPizzaSizes, fetchProductExtras, type Product } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 import { motion } from 'framer-motion';
@@ -69,6 +70,7 @@ export default function MenuPage() {
     <div className="min-h-screen bg-background pb-20">
       <MenuHeader onCartClick={() => setCartOpen(true)} />
       <HeroBanner />
+      <ClosedBanner />
       <CategoryBar
         categories={categories}
         activeCategory={activeCategory}
