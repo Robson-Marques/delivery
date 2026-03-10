@@ -1,15 +1,31 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { MenuItem, PizzaSize, Extra } from '@/data/menu-data';
+import { validateCoupon } from '@/lib/api';
+import { toast } from 'sonner';
+
+export interface CartExtra {
+  id: string;
+  name: string;
+  price: number;
+}
 
 export interface CartItemData {
   id: string;
-  menuItem: MenuItem;
+  productId: string;
+  productName: string;
+  productImage: string;
   quantity: number;
-  size?: PizzaSize;
-  secondFlavor?: MenuItem;
-  extras: Extra[];
+  size?: string;
+  secondFlavorId?: string;
+  secondFlavorName?: string;
+  extras: CartExtra[];
   observations: string;
   unitPrice: number;
+}
+
+interface CouponData {
+  code: string;
+  discountType: 'fixed' | 'percentage';
+  discountValue: number;
 }
 
 interface CartContextType {
@@ -19,8 +35,8 @@ interface CartContextType {
   updateQuantity: (id: string, quantity: number) => void;
   updateObservations: (id: string, observations: string) => void;
   clearCart: () => void;
-  coupon: string | null;
-  applyCoupon: (code: string) => void;
+  coupon: CouponData | null;
+  applyCoupon: (code: string) => Promise<boolean>;
   removeCoupon: () => void;
   subtotal: number;
   discount: number;
@@ -33,11 +49,11 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItemData[]>([]);
-  const [coupon, setCoupon] = useState<string | null>(null);
+  const [coupon, setCoupon] = useState<CouponData | null>(null);
   const deliveryFee = 5.99;
 
   const addItem = useCallback((item: CartItemData) => {
-    setItems(prev => [...prev, { ...item, id: `${item.menuItem.id}-${Date.now()}` }]);
+    setItems(prev => [...prev, { ...item, id: `${item.productId}-${Date.now()}` }]);
   }, []);
 
   const removeItem = useCallback((id: string) => {
@@ -61,19 +77,32 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setCoupon(null);
   }, []);
 
-  const applyCoupon = useCallback((code: string) => {
-    setCoupon(code.toUpperCase());
+  const applyCoupon = useCallback(async (code: string): Promise<boolean> => {
+    const result = await validateCoupon(code);
+    if (!result) {
+      toast.error('Cupom inválido ou expirado');
+      return false;
+    }
+    setCoupon({
+      code: result.code,
+      discountType: result.discount_type,
+      discountValue: Number(result.discount_value),
+    });
+    toast.success(`Cupom ${result.code} aplicado!`);
+    return true;
   }, []);
 
   const removeCoupon = useCallback(() => setCoupon(null), []);
 
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
 
-  const discount = coupon === 'PRIMEIRACOMPRA' ? subtotal * 0.1 :
-    coupon === 'FRETEGRATIS' ? deliveryFee :
-    coupon === 'PIZZA10' ? 10 : 0;
+  const discount = coupon
+    ? coupon.discountType === 'percentage'
+      ? subtotal * (coupon.discountValue / 100)
+      : coupon.discountValue
+    : 0;
 
-  const total = Math.max(0, subtotal - discount + (coupon === 'FRETEGRATIS' ? 0 : deliveryFee));
+  const total = Math.max(0, subtotal - discount + deliveryFee);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   return (

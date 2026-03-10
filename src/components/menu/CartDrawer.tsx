@@ -12,6 +12,7 @@ interface CartDrawerProps {
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const { items, updateQuantity, removeItem, coupon, applyCoupon, removeCoupon, subtotal, discount, deliveryFee, total } = useCart();
   const [couponInput, setCouponInput] = useState('');
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
   const navigate = useNavigate();
 
   const formatPrice = (p: number) => p.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -19,6 +20,14 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const handleCheckout = () => {
     onClose();
     navigate('/checkout');
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setApplyingCoupon(true);
+    await applyCoupon(couponInput);
+    setCouponInput('');
+    setApplyingCoupon(false);
   };
 
   return (
@@ -39,7 +48,6 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
             className="absolute right-0 top-0 bottom-0 w-full sm:max-w-sm bg-card shadow-xl flex flex-col"
             onClick={e => e.stopPropagation()}
           >
-            {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-heading font-bold text-lg text-foreground">Carrinho</h2>
               <button onClick={onClose} className="p-1.5 rounded-full hover:bg-secondary transition-colors">
@@ -47,7 +55,6 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               </button>
             </div>
 
-            {/* Items */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {items.length === 0 ? (
                 <div className="text-center py-12">
@@ -58,11 +65,13 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                 items.map(item => (
                   <div key={item.id} className="bg-secondary/50 rounded-lg p-3">
                     <div className="flex gap-2">
-                      <img src={item.menuItem.image} alt={item.menuItem.name} className="w-14 h-14 rounded-lg object-cover" />
+                      {item.productImage && (
+                        <img src={item.productImage} alt={item.productName} className="w-14 h-14 rounded-lg object-cover" />
+                      )}
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-sm text-foreground truncate">{item.menuItem.name}</h4>
+                        <h4 className="font-medium text-sm text-foreground truncate">{item.productName}</h4>
                         {item.size && <span className="text-xs text-muted-foreground capitalize">{item.size}</span>}
-                        {item.secondFlavor && <span className="text-xs text-muted-foreground"> + {item.secondFlavor.name}</span>}
+                        {item.secondFlavorName && <span className="text-xs text-muted-foreground"> + {item.secondFlavorName}</span>}
                         {item.extras.length > 0 && (
                           <p className="text-xs text-muted-foreground">{item.extras.map(e => e.name).join(', ')}</p>
                         )}
@@ -91,7 +100,6 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               )}
             </div>
 
-            {/* Coupon & totals */}
             {items.length > 0 && (
               <div className="border-t border-border p-4 space-y-3">
                 {!coupon ? (
@@ -106,38 +114,25 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       />
                     </div>
                     <button
-                      onClick={() => { applyCoupon(couponInput); setCouponInput(''); }}
-                      className="px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                      onClick={handleApplyCoupon}
+                      disabled={applyingCoupon}
+                      className="px-3 py-2 rounded-lg bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors disabled:opacity-50"
                     >
                       Aplicar
                     </button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between bg-success/10 rounded-lg px-3 py-2">
-                    <span className="text-xs font-medium text-success">🎉 Cupom {coupon} aplicado!</span>
+                    <span className="text-xs font-medium text-success">🎉 Cupom {coupon.code} aplicado!</span>
                     <button onClick={removeCoupon} className="text-xs text-destructive">Remover</button>
                   </div>
                 )}
 
                 <div className="space-y-1 text-sm">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Subtotal</span>
-                    <span>{formatPrice(subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Entrega</span>
-                    <span>{formatPrice(deliveryFee)}</span>
-                  </div>
-                  {discount > 0 && (
-                    <div className="flex justify-between text-success">
-                      <span>Desconto</span>
-                      <span>-{formatPrice(discount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-foreground pt-1 border-t border-border">
-                    <span>Total</span>
-                    <span>{formatPrice(total)}</span>
-                  </div>
+                  <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+                  <div className="flex justify-between text-muted-foreground"><span>Entrega</span><span>{formatPrice(deliveryFee)}</span></div>
+                  {discount > 0 && <div className="flex justify-between text-success"><span>Desconto</span><span>-{formatPrice(discount)}</span></div>}
+                  <div className="flex justify-between font-bold text-foreground pt-1 border-t border-border"><span>Total</span><span>{formatPrice(total)}</span></div>
                 </div>
 
                 <button
