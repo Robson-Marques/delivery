@@ -200,7 +200,8 @@ export default function CheckoutPage() {
         <section className="bg-secondary/50 rounded-xl p-4 space-y-1.5 text-sm">
           <div className="flex justify-between text-muted-foreground"><span>Subtotal ({items.length} itens)</span><span>{formatPrice(subtotal)}</span></div>
           {orderType === 'delivery' && <div className="flex justify-between text-muted-foreground"><span>Entrega</span><span>{formatPrice(deliveryFee)}</span></div>}
-          {discount > 0 && <div className="flex justify-between text-success"><span>Desconto</span><span>-{formatPrice(discount)}</span></div>}
+          {loyaltyDiscount > 0 && <div className="flex justify-between text-primary"><span>Pontos fidelidade</span><span>-{formatPrice(loyaltyDiscount)}</span></div>}
+          {discount > 0 && <div className="flex justify-between text-success"><span>Desconto total</span><span>-{formatPrice(discount)}</span></div>}
           <div className="flex justify-between font-bold text-foreground pt-1.5 border-t border-border">
             <span>Total</span>
             <span className="text-primary">{formatPrice(actualTotal)}</span>
