@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { ArrowLeft, ChefHat, BarChart3, Home, LogIn, Package, Settings, FileBarChart } from 'lucide-react';
+import { ArrowLeft, ChefHat, BarChart3, Home, LogIn, Package, Settings, FileBarChart, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KanbanBoard } from '@/components/admin/KanbanBoard';
 import { DashboardStats } from '@/components/admin/DashboardStats';
 import { ProductManager } from '@/components/admin/ProductManager';
 import { ReportsPanel } from '@/components/admin/ReportsPanel';
 import { SettingsPanel } from '@/components/admin/SettingsPanel';
+import { CustomerCRM } from '@/components/admin/CustomerCRM';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
 
-type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'settings';
+type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'settings';
 
 export default function AdminDashboard() {
   const [view, setView] = useState<AdminView>('orders');
@@ -25,6 +26,7 @@ export default function AdminDashboard() {
     { id: 'kitchen', label: 'Cozinha', icon: <ChefHat className="w-4 h-4" /> },
     { id: 'products', label: 'Produtos', icon: <Package className="w-4 h-4" /> },
     { id: 'reports', label: 'Relatórios', icon: <FileBarChart className="w-4 h-4" /> },
+    { id: 'customers', label: 'Clientes', icon: <Users className="w-4 h-4" /> },
     { id: 'settings', label: 'Config', icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -68,6 +70,7 @@ export default function AdminDashboard() {
         {view === 'kitchen' && <KanbanBoard kitchenMode />}
         {view === 'products' && <ProductManager />}
         {view === 'reports' && <ReportsPanel />}
+        {view === 'customers' && <CustomerCRM />}
         {view === 'settings' && <SettingsPanel />}
       </main>
     </div>
