@@ -26,6 +26,7 @@ export default function AdminDashboard() {
     { id: 'kitchen', label: 'Cozinha', icon: <ChefHat className="w-4 h-4" /> },
     { id: 'products', label: 'Produtos', icon: <Package className="w-4 h-4" /> },
     { id: 'reports', label: 'Relatórios', icon: <FileBarChart className="w-4 h-4" /> },
+    { id: 'customers', label: 'Clientes', icon: <Users className="w-4 h-4" /> },
     { id: 'settings', label: 'Config', icon: <Settings className="w-4 h-4" /> },
   ];
 
