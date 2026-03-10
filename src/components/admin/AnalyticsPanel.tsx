@@ -8,7 +8,7 @@ export function AnalyticsPanel() {
     queryFn: async () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const { data } = await supabase.from('analytics_events' as string)
+      const { data } = await supabase.from('analytics_events')
         .select('*')
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });

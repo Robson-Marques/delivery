@@ -7,8 +7,8 @@ export async function trackEvent(eventType: string, metadata?: Record<string, un
     await supabase.from('analytics_events').insert({
       event_type: eventType,
       session_id: sessionId,
-      metadata: metadata || {},
-    } as Record<string, unknown>);
+      metadata: (metadata || {}) as import('@/integrations/supabase/types').Json,
+    });
   } catch {
     // Silent fail for analytics
   }
