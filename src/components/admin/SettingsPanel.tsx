@@ -152,6 +152,7 @@ export function SettingsPanel() {
         </section>
       )}
 
+      {tab === 'hours' && <OpeningHoursEditor />}
       {tab === 'coupons' && <CouponManager />}
       {tab === 'drivers' && <DriverManager />}
       {tab === 'qrcode' && <QRCodeDisplay />}
