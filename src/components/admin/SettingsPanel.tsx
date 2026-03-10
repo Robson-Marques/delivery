@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { CouponManager } from './CouponManager';
 import { DriverManager } from './DriverManager';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import { OpeningHoursEditor } from './OpeningHoursEditor';
 import { useEffect } from 'react';
 
 export function SettingsPanel() {
