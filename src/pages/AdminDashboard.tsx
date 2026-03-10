@@ -10,6 +10,7 @@ import { CustomerCRM } from '@/components/admin/CustomerCRM';
 import { AnalyticsPanel } from '@/components/admin/AnalyticsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
+import { useAutoOpenClose } from '@/hooks/useAutoOpenClose';
 
 type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'analytics' | 'settings';
 
