@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ChefHat, BarChart3, Home, LogIn, Package, Settings, FileBarChart } from 'lucide-react';
+import { ArrowLeft, ChefHat, BarChart3, Home, LogIn, Package, Settings, FileBarChart, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KanbanBoard } from '@/components/admin/KanbanBoard';
 import { DashboardStats } from '@/components/admin/DashboardStats';
