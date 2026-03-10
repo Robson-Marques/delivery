@@ -44,6 +44,7 @@ export default function MenuPage() {
   });
 
   const handleAddItem = (item: Product) => {
+    trackEvent(AnalyticsEvents.ADD_TO_CART, { product: item.name });
     if (item.is_pizza) {
       setSelectedPizza(item);
     } else {

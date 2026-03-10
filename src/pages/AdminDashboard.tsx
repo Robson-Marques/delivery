@@ -11,7 +11,7 @@ import { AnalyticsPanel } from '@/components/admin/AnalyticsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
 
-type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'settings';
+type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'analytics' | 'settings';
 
 export default function AdminDashboard() {
   const [view, setView] = useState<AdminView>('orders');
