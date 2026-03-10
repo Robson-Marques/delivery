@@ -4,11 +4,13 @@ const sessionId = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 export async function trackEvent(eventType: string, metadata?: Record<string, unknown>) {
   try {
-    await supabase.from('analytics_events').insert({
+    // Use rpc-style insert since analytics_events may not be in generated types yet
+    const { error } = await (supabase as any).from('analytics_events').insert({
       event_type: eventType,
       session_id: sessionId,
-      metadata: (metadata || {}) as import('@/integrations/supabase/types').Json,
+      metadata: metadata || {},
     });
+    if (error) console.debug('Analytics insert error:', error);
   } catch {
     // Silent fail for analytics
   }

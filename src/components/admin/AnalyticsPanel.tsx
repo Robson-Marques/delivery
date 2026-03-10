@@ -1,6 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Funnel, FunnelChart } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+interface AnalyticsEvent {
+  event_type: string;
+  session_id: string;
+  created_at: string;
+  metadata: Record<string, unknown>;
+}
 
 export function AnalyticsPanel() {
   const { data: events = [] } = useQuery({
@@ -8,11 +15,11 @@ export function AnalyticsPanel() {
     queryFn: async () => {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const { data } = await supabase.from('analytics_events')
+      const { data } = await (supabase as any).from('analytics_events')
         .select('*')
         .gte('created_at', thirtyDaysAgo.toISOString())
         .order('created_at', { ascending: false });
-      return (data || []) as { event_type: string; session_id: string; created_at: string; metadata: Record<string, unknown> }[];
+      return (data || []) as AnalyticsEvent[];
     },
   });
 
@@ -28,7 +35,6 @@ export function AnalyticsPanel() {
 
   const conversionRate = (from: number, to: number) => from > 0 ? ((to / from) * 100).toFixed(1) : '0';
 
-  // Events by day
   const dailyMap: Record<string, number> = {};
   events.forEach(e => {
     const day = new Date(e.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
