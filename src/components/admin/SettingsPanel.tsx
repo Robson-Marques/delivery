@@ -6,11 +6,12 @@ import { toast } from 'sonner';
 import { CouponManager } from './CouponManager';
 import { DriverManager } from './DriverManager';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import { OpeningHoursEditor } from './OpeningHoursEditor';
 import { useEffect } from 'react';
 
 export function SettingsPanel() {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'general' | 'neighborhoods' | 'coupons' | 'drivers' | 'qrcode'>('general');
+  const [tab, setTab] = useState<'general' | 'hours' | 'neighborhoods' | 'coupons' | 'drivers' | 'qrcode'>('general');
 
   const { data: settings } = useQuery({
     queryKey: ['establishment-settings'],
@@ -79,6 +80,7 @@ export function SettingsPanel() {
 
   const tabs = [
     { id: 'general' as const, label: 'Geral' },
+    { id: 'hours' as const, label: 'Horários' },
     { id: 'neighborhoods' as const, label: 'Bairros' },
     { id: 'coupons' as const, label: 'Cupons' },
     { id: 'drivers' as const, label: 'Entregadores' },
@@ -150,6 +152,7 @@ export function SettingsPanel() {
         </section>
       )}
 
+      {tab === 'hours' && <OpeningHoursEditor />}
       {tab === 'coupons' && <CouponManager />}
       {tab === 'drivers' && <DriverManager />}
       {tab === 'qrcode' && <QRCodeDisplay />}
