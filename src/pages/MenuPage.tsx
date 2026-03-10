@@ -18,6 +18,8 @@ export default function MenuPage() {
   const [cartOpen, setCartOpen] = useState(false);
   const { addItem, itemCount, total } = useCart();
 
+  useEffect(() => { trackEvent(AnalyticsEvents.MENU_VIEW); }, []);
+
   const { data: categories = [], isLoading: loadingCats } = useQuery({
     queryKey: ['categories'],
     queryFn: fetchCategories,
