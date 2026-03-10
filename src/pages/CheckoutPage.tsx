@@ -3,6 +3,7 @@ import { ArrowLeft, MapPin, CreditCard, Banknote, QrCode, Smartphone } from 'luc
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { createOrder, createOrderItems, findOrCreateCustomer } from '@/lib/api';
+import { LoyaltyRedeem } from '@/components/checkout/LoyaltyRedeem';
 import { toast } from 'sonner';
 
 type OrderType = 'delivery' | 'pickup' | 'dine_in';
