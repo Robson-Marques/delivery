@@ -1,39 +1,39 @@
 import { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { MenuItem, PizzaSize, Extra } from '@/data/menu-data';
-import { menuItems, pizzaSizes } from '@/data/menu-data';
+import type { Product, PizzaSize, ProductExtra } from '@/lib/api';
 import { useCart } from '@/contexts/CartContext';
 
 interface PizzaCustomizerProps {
-  item: MenuItem;
+  item: Product;
+  pizzaSizes: PizzaSize[];
+  pizzaExtras: ProductExtra[];
+  allPizzas: Product[];
   onClose: () => void;
 }
 
-export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
+export function PizzaCustomizer({ item, pizzaSizes, pizzaExtras, allPizzas, onClose }: PizzaCustomizerProps) {
   const { addItem } = useCart();
-  const [size, setSize] = useState<PizzaSize>('grande');
+  const [sizeId, setSizeId] = useState(pizzaSizes.find(s => s.name === 'grande')?.id || pizzaSizes[0]?.id || '');
   const [twoFlavors, setTwoFlavors] = useState(false);
-  const [secondFlavor, setSecondFlavor] = useState<MenuItem | null>(null);
-  const [selectedExtras, setSelectedExtras] = useState<Extra[]>([]);
+  const [secondFlavor, setSecondFlavor] = useState<Product | null>(null);
+  const [selectedExtras, setSelectedExtras] = useState<ProductExtra[]>([]);
   const [observations, setObservations] = useState('');
 
-  const pizzas = menuItems.filter(m => m.isPizza && m.id !== item.id);
-  const sizeOption = pizzaSizes.find(s => s.id === size)!;
+  const sizeOption = pizzaSizes.find(s => s.id === sizeId);
+  const multiplier = sizeOption ? Number(sizeOption.price_multiplier) : 1;
   
-  const basePrice = item.promoPrice || item.price;
-  const secondPrice = secondFlavor ? (secondFlavor.promoPrice || secondFlavor.price) : 0;
+  const basePrice = item.promo_price ? Number(item.promo_price) : Number(item.price);
+  const secondPrice = secondFlavor ? (secondFlavor.promo_price ? Number(secondFlavor.promo_price) : Number(secondFlavor.price)) : 0;
   const pizzaPrice = twoFlavors && secondFlavor
-    ? Math.max(basePrice, secondPrice) * sizeOption.priceMultiplier
-    : basePrice * sizeOption.priceMultiplier;
-  const extrasTotal = selectedExtras.reduce((sum, e) => sum + e.price, 0);
+    ? Math.max(basePrice, secondPrice) * multiplier
+    : basePrice * multiplier;
+  const extrasTotal = selectedExtras.reduce((sum, e) => sum + Number(e.price), 0);
   const totalPrice = pizzaPrice + extrasTotal;
 
-  const toggleExtra = (extra: Extra) => {
+  const toggleExtra = (extra: ProductExtra) => {
     setSelectedExtras(prev =>
-      prev.find(e => e.id === extra.id)
-        ? prev.filter(e => e.id !== extra.id)
-        : [...prev, extra]
+      prev.find(e => e.id === extra.id) ? prev.filter(e => e.id !== extra.id) : [...prev, extra]
     );
   };
 
@@ -42,11 +42,14 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
   const handleAdd = () => {
     addItem({
       id: '',
-      menuItem: item,
+      productId: item.id,
+      productName: item.name,
+      productImage: item.image_url || '',
       quantity: 1,
-      size,
-      secondFlavor: twoFlavors ? secondFlavor || undefined : undefined,
-      extras: selectedExtras,
+      size: sizeOption?.name,
+      secondFlavorId: twoFlavors && secondFlavor ? secondFlavor.id : undefined,
+      secondFlavorName: twoFlavors && secondFlavor ? secondFlavor.name : undefined,
+      extras: selectedExtras.map(e => ({ id: e.id, name: e.name, price: Number(e.price) })),
       observations,
       unitPrice: totalPrice,
     });
@@ -70,9 +73,8 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
           className="bg-card w-full sm:max-w-md sm:rounded-xl rounded-t-2xl max-h-[90vh] overflow-y-auto"
           onClick={e => e.stopPropagation()}
         >
-          {/* Header */}
           <div className="relative h-40 overflow-hidden rounded-t-2xl sm:rounded-t-xl">
-            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+            {item.image_url && <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />}
             <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
             <button onClick={onClose} className="absolute top-3 right-3 p-1.5 rounded-full bg-card/80 text-foreground">
               <X className="w-4 h-4" />
@@ -91,11 +93,9 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
                 {pizzaSizes.map(s => (
                   <button
                     key={s.id}
-                    onClick={() => setSize(s.id)}
+                    onClick={() => setSizeId(s.id)}
                     className={`p-2.5 rounded-lg border text-sm transition-all ${
-                      size === s.id
-                        ? 'border-primary bg-primary/5 text-foreground'
-                        : 'border-border text-muted-foreground hover:border-primary/50'
+                      sizeId === s.id ? 'border-primary bg-primary/5 text-foreground' : 'border-border text-muted-foreground hover:border-primary/50'
                     }`}
                   >
                     <span className="font-medium">{s.label}</span>
@@ -106,7 +106,7 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
             </div>
 
             {/* Two flavors */}
-            {item.allowTwoFlavors && (
+            {item.allow_two_flavors && (
               <div>
                 <button
                   onClick={() => { setTwoFlavors(!twoFlavors); setSecondFlavor(null); }}
@@ -124,7 +124,7 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
 
                 {twoFlavors && (
                   <div className="mt-2 space-y-1.5 max-h-32 overflow-y-auto">
-                    {pizzas.map(p => (
+                    {allPizzas.map(p => (
                       <button
                         key={p.id}
                         onClick={() => setSecondFlavor(p)}
@@ -134,9 +134,9 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
                             : 'bg-secondary hover:bg-secondary/80 border border-transparent'
                         }`}
                       >
-                        <img src={p.image} alt={p.name} className="w-8 h-8 rounded object-cover" />
+                        {p.image_url && <img src={p.image_url} alt={p.name} className="w-8 h-8 rounded object-cover" />}
                         <span className="flex-1 font-medium text-foreground">{p.name}</span>
-                        <span className="text-xs text-muted-foreground">{formatPrice(p.price)}</span>
+                        <span className="text-xs text-muted-foreground">{formatPrice(Number(p.price))}</span>
                       </button>
                     ))}
                   </div>
@@ -145,11 +145,11 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
             )}
 
             {/* Extras */}
-            {item.extras && item.extras.length > 0 && (
+            {pizzaExtras.length > 0 && (
               <div>
                 <h4 className="font-heading font-semibold text-sm text-foreground mb-2">Extras</h4>
                 <div className="space-y-1.5">
-                  {item.extras.map(extra => (
+                  {pizzaExtras.map(extra => (
                     <button
                       key={extra.id}
                       onClick={() => toggleExtra(extra)}
@@ -160,7 +160,7 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
                       }`}
                     >
                       <span className="text-foreground">{extra.name}</span>
-                      <span className="text-muted-foreground">+{formatPrice(extra.price)}</span>
+                      <span className="text-muted-foreground">+{formatPrice(Number(extra.price))}</span>
                     </button>
                   ))}
                 </div>
@@ -178,7 +178,6 @@ export function PizzaCustomizer({ item, onClose }: PizzaCustomizerProps) {
               />
             </div>
 
-            {/* Add button */}
             <button
               onClick={handleAdd}
               disabled={twoFlavors && !secondFlavor}
