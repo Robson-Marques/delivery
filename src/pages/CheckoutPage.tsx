@@ -11,7 +11,7 @@ type PaymentMethod = 'pix' | 'cash' | 'card' | 'online';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { items, subtotal, discount, deliveryFee, total, clearCart, coupon } = useCart();
+  const { items, subtotal, discount, deliveryFee, total, clearCart, coupon, loyaltyPointsUsed, loyaltyDiscount } = useCart();
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
