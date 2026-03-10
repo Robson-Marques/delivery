@@ -6,6 +6,7 @@ import { DashboardStats } from '@/components/admin/DashboardStats';
 import { ProductManager } from '@/components/admin/ProductManager';
 import { ReportsPanel } from '@/components/admin/ReportsPanel';
 import { SettingsPanel } from '@/components/admin/SettingsPanel';
+import { CustomerCRM } from '@/components/admin/CustomerCRM';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
 
