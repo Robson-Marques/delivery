@@ -114,7 +114,7 @@ export async function fetchOrderItems(orderId: string) {
   return data;
 }
 
-export async function updateOrderStatus(orderId: string, status: string) {
+export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   const updateData: Record<string, unknown> = { status };
   if (status === 'delivering') updateData.dispatched_at = new Date().toISOString();
   if (status === 'done') updateData.delivered_at = new Date().toISOString();
