@@ -11,7 +11,7 @@ import { useEffect } from 'react';
 
 export function SettingsPanel() {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<'general' | 'neighborhoods' | 'coupons' | 'drivers' | 'qrcode'>('general');
+  const [tab, setTab] = useState<'general' | 'hours' | 'neighborhoods' | 'coupons' | 'drivers' | 'qrcode'>('general');
 
   const { data: settings } = useQuery({
     queryKey: ['establishment-settings'],
