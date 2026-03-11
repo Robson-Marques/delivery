@@ -32,6 +32,7 @@ export default function AdminDashboard() {
     { id: 'reports', label: 'Relatórios', icon: <FileBarChart className="w-4 h-4" /> },
     { id: 'customers', label: 'Clientes', icon: <Users className="w-4 h-4" /> },
     { id: 'analytics', label: 'Analytics', icon: <Activity className="w-4 h-4" /> },
+    { id: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare className="w-4 h-4" /> },
     { id: 'settings', label: 'Config', icon: <Settings className="w-4 h-4" /> },
   ];
 
