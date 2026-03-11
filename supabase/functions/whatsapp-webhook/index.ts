@@ -150,16 +150,13 @@ serve(async (req) => {
       .join("\n");
 
     const isOpen = (() => {
-      // Se o admin forçou fechamento manual (auto_toggle = false e is_open = false)
       if (settings?.is_open === false) return false;
 
       const hours =
         typeof settings?.opening_hours === "string" ? JSON.parse(settings.opening_hours) : settings?.opening_hours;
 
-      // Se não tem horários ou auto_toggle está desligado, usa só o is_open
       if (!hours || !hours.auto_toggle) return settings?.is_open ?? false;
 
-      // Mapeia dia da semana para as chaves do seu JSON
       const dayMap: Record<number, string> = {
         0: "sun",
         1: "mon",
@@ -170,22 +167,30 @@ serve(async (req) => {
         6: "sat",
       };
 
-      // Ajusta para fuso de Brasília
+      // Converte para Brasília manualmente (UTC-3) sem depender de toLocaleString
       const now = new Date();
-      const nowBrasilia = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+      const brasiliaMs = utcMs - 3 * 60 * 60000; // UTC-3
+      const nowBrasilia = new Date(brasiliaMs);
 
-      const currentDay = dayMap[nowBrasilia.getDay()];
-      const currentTime = nowBrasilia.getHours() * 60 + nowBrasilia.getMinutes();
+      const currentDay = dayMap[nowBrasilia.getUTCDay()];
+      const currentTime = nowBrasilia.getUTCHours() * 60 + nowBrasilia.getUTCMinutes();
+
+      console.log(
+        `[HORÁRIO] Brasília: ${nowBrasilia.getUTCHours()}:${String(nowBrasilia.getUTCMinutes()).padStart(2, "0")} | Dia: ${currentDay} | Minutos: ${currentTime}`,
+      );
 
       const todayHours = hours?.[currentDay];
-
-      // Dia não configurado ou marcado como desabilitado
       if (!todayHours || !todayHours.enabled) return false;
 
       const [openH, openM] = todayHours.open.split(":").map(Number);
       const [closeH, closeM] = todayHours.close.split(":").map(Number);
       const openTime = openH * 60 + openM;
       const closeTime = closeH * 60 + closeM;
+
+      console.log(
+        `[HORÁRIO] Abertura: ${openTime} | Fechamento: ${closeTime} | Atual: ${currentTime} | Aberto: ${currentTime >= openTime && currentTime < closeTime}`,
+      );
 
       return currentTime >= openTime && currentTime < closeTime;
     })();
