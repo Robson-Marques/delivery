@@ -8,6 +8,7 @@ import { ReportsPanel } from '@/components/admin/ReportsPanel';
 import { SettingsPanel } from '@/components/admin/SettingsPanel';
 import { CustomerCRM } from '@/components/admin/CustomerCRM';
 import { AnalyticsPanel } from '@/components/admin/AnalyticsPanel';
+import { WhatsAppPanel } from '@/components/admin/WhatsAppPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
 import { useAutoOpenClose } from '@/hooks/useAutoOpenClose';
