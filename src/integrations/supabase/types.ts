@@ -568,6 +568,30 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_config: {
+        Row: {
+          access_token: string
+          id: string
+          phone_number_id: string
+          updated_at: string
+          verify_token: string
+        }
+        Insert: {
+          access_token?: string
+          id?: string
+          phone_number_id?: string
+          updated_at?: string
+          verify_token?: string
+        }
+        Update: {
+          access_token?: string
+          id?: string
+          phone_number_id?: string
+          updated_at?: string
+          verify_token?: string
+        }
+        Relationships: []
+      }
       whatsapp_messages: {
         Row: {
           created_at: string
