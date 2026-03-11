@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.99.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -95,55 +96,42 @@ serve(async (req) => {
       .eq("is_active", true)
       .order("sort_order");
 
-    const { data: products } = await supabase
-      .from("products")
-      .select("*")
-      .eq("is_active", true)
-      .order("sort_order");
+    const { data: products } = await supabase.from("products").select("*").eq("is_active", true).order("sort_order");
 
-    const { data: settings } = await supabase
-      .from("establishment_settings")
-      .select("*")
-      .limit(1)
-      .single();
+    const { data: settings } = await supabase.from("establishment_settings").select("*").limit(1).single();
 
-    const { data: neighborhoods } = await supabase
-      .from("neighborhoods")
-      .select("*")
-      .eq("is_active", true);
+    const { data: neighborhoods } = await supabase.from("neighborhoods").select("*").eq("is_active", true);
 
-    const { data: pizzaSizes } = await supabase
-      .from("pizza_sizes")
-      .select("*")
-      .order("sort_order");
+    const { data: pizzaSizes } = await supabase.from("pizza_sizes").select("*").order("sort_order");
 
     // Build menu context
-    const menuText = (categories || []).map((cat: any) => {
-      const catProducts = (products || []).filter((p: any) => p.category_id === cat.id);
-      if (catProducts.length === 0) return "";
-      const items = catProducts.map((p: any) => {
-        const price = p.promo_price ? `~R$${p.price}~ R$${p.promo_price}` : `R$${Number(p.price).toFixed(2)}`;
-        const desc = p.description ? ` - ${p.description}` : "";
-        const pizza = p.is_pizza ? " 🍕 (permite 2 sabores)" : "";
-        return `  • ${p.name}${desc} → ${price}${pizza}`;
-      }).join("\n");
-      return `*${cat.icon || ""} ${cat.name}*\n${items}`;
-    }).filter(Boolean).join("\n\n");
+    const menuText = (categories || [])
+      .map((cat: any) => {
+        const catProducts = (products || []).filter((p: any) => p.category_id === cat.id);
+        if (catProducts.length === 0) return "";
+        const items = catProducts
+          .map((p: any) => {
+            const price = p.promo_price ? `~R$${p.price}~ R$${p.promo_price}` : `R$${Number(p.price).toFixed(2)}`;
+            const desc = p.description ? ` - ${p.description}` : "";
+            const pizza = p.is_pizza ? " 🍕 (permite 2 sabores)" : "";
+            return `  • ${p.name}${desc} → ${price}${pizza}`;
+          })
+          .join("\n");
+        return `*${cat.icon || ""} ${cat.name}*\n${items}`;
+      })
+      .filter(Boolean)
+      .join("\n\n");
 
-    const sizesText = (pizzaSizes || []).map((s: any) =>
-      `  • ${s.label} (${s.slices} fatias) - multiplicador ${s.price_multiplier}x`
-    ).join("\n");
+    const sizesText = (pizzaSizes || [])
+      .map((s: any) => `  • ${s.label} (${s.slices} fatias) - multiplicador ${s.price_multiplier}x`)
+      .join("\n");
 
-    const neighborhoodsText = (neighborhoods || []).map((n: any) =>
-      `  • ${n.name}: R$${Number(n.delivery_fee).toFixed(2)}`
-    ).join("\n");
+    const neighborhoodsText = (neighborhoods || [])
+      .map((n: any) => `  • ${n.name}: R$${Number(n.delivery_fee).toFixed(2)}`)
+      .join("\n");
 
     // Check existing customer
-    const { data: customer } = await supabase
-      .from("customers")
-      .select("*")
-      .eq("phone", from)
-      .maybeSingle();
+    const { data: customer } = await supabase.from("customers").select("*").eq("phone", from).maybeSingle();
 
     const customerInfo = customer
       ? `Cliente cadastrado: ${customer.name}, ${customer.total_orders} pedidos, ${customer.loyalty_points} pontos de fidelidade. Endereço: ${customer.address || "não cadastrado"} ${customer.address_number || ""} ${customer.neighborhood || ""}`
@@ -157,11 +145,50 @@ serve(async (req) => {
       .order("created_at", { ascending: false })
       .limit(3);
 
-    const ordersInfo = (recentOrders || []).map((o: any) =>
-      `Pedido #${o.order_number}: ${o.status} - R$${Number(o.total).toFixed(2)} (${o.order_type})`
-    ).join("\n");
+    const ordersInfo = (recentOrders || [])
+      .map((o: any) => `Pedido #${o.order_number}: ${o.status} - R$${Number(o.total).toFixed(2)} (${o.order_type})`)
+      .join("\n");
 
-    const isOpen = settings?.is_open ?? false;
+    const isOpen = (() => {
+      // Se o admin forçou fechamento manual (auto_toggle = false e is_open = false)
+      if (settings?.is_open === false) return false;
+
+      const hours =
+        typeof settings?.opening_hours === "string" ? JSON.parse(settings.opening_hours) : settings?.opening_hours;
+
+      // Se não tem horários ou auto_toggle está desligado, usa só o is_open
+      if (!hours || !hours.auto_toggle) return settings?.is_open ?? false;
+
+      // Mapeia dia da semana para as chaves do seu JSON
+      const dayMap: Record<number, string> = {
+        0: "sun",
+        1: "mon",
+        2: "tue",
+        3: "wed",
+        4: "thu",
+        5: "fri",
+        6: "sat",
+      };
+
+      // Ajusta para fuso de Brasília
+      const now = new Date();
+      const nowBrasilia = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+
+      const currentDay = dayMap[nowBrasilia.getDay()];
+      const currentTime = nowBrasilia.getHours() * 60 + nowBrasilia.getMinutes();
+
+      const todayHours = hours?.[currentDay];
+
+      // Dia não configurado ou marcado como desabilitado
+      if (!todayHours || !todayHours.enabled) return false;
+
+      const [openH, openM] = todayHours.open.split(":").map(Number);
+      const [closeH, closeM] = todayHours.close.split(":").map(Number);
+      const openTime = openH * 60 + openM;
+      const closeTime = closeH * 60 + closeM;
+
+      return currentTime >= openTime && currentTime < closeTime;
+    })();
 
     const systemPrompt = `Você é o assistente virtual do ${settings?.name || "nosso restaurante"} no WhatsApp. Responda de forma amigável, concisa e em português brasileiro.
 
@@ -239,41 +266,50 @@ INSTRUÇÕES:
           // Find or create customer
           let customerId = customer?.id;
           if (!customerId) {
-            const { data: newCust } = await supabase.from("customers").insert({
-              name: orderData.customer_name || contactName,
-              phone: from,
-              address: orderData.delivery_address || null,
-              address_number: orderData.delivery_number || null,
-              neighborhood: orderData.delivery_neighborhood || null,
-            }).select().single();
+            const { data: newCust } = await supabase
+              .from("customers")
+              .insert({
+                name: orderData.customer_name || contactName,
+                phone: from,
+                address: orderData.delivery_address || null,
+                address_number: orderData.delivery_number || null,
+                neighborhood: orderData.delivery_neighborhood || null,
+              })
+              .select()
+              .single();
             customerId = newCust?.id;
           }
 
           // Calculate totals
-          const subtotal = orderData.items.reduce((s: number, i: any) => s + (i.unit_price * i.quantity), 0);
-          const deliveryNeighborhood = (neighborhoods || []).find((n: any) =>
-            n.name.toLowerCase() === (orderData.delivery_neighborhood || "").toLowerCase()
+          const subtotal = orderData.items.reduce((s: number, i: any) => s + i.unit_price * i.quantity, 0);
+          const deliveryNeighborhood = (neighborhoods || []).find(
+            (n: any) => n.name.toLowerCase() === (orderData.delivery_neighborhood || "").toLowerCase(),
           );
-          const deliveryFee = orderData.order_type === "delivery"
-            ? (deliveryNeighborhood?.delivery_fee || settings?.default_delivery_fee || 5.99)
-            : 0;
+          const deliveryFee =
+            orderData.order_type === "delivery"
+              ? deliveryNeighborhood?.delivery_fee || settings?.default_delivery_fee || 5.99
+              : 0;
           const total = subtotal + Number(deliveryFee);
 
-          const { data: order } = await supabase.from("orders").insert({
-            customer_id: customerId,
-            customer_name: orderData.customer_name || contactName,
-            customer_phone: from,
-            order_type: orderData.order_type || "delivery",
-            payment_method: orderData.payment_method || "pix",
-            delivery_address: orderData.delivery_address || null,
-            delivery_number: orderData.delivery_number || null,
-            delivery_neighborhood: orderData.delivery_neighborhood || null,
-            subtotal,
-            delivery_fee: deliveryFee,
-            discount: 0,
-            total,
-            observations: orderData.observations || `Pedido via WhatsApp`,
-          }).select().single();
+          const { data: order } = await supabase
+            .from("orders")
+            .insert({
+              customer_id: customerId,
+              customer_name: orderData.customer_name || contactName,
+              customer_phone: from,
+              order_type: orderData.order_type || "delivery",
+              payment_method: orderData.payment_method || "pix",
+              delivery_address: orderData.delivery_address || null,
+              delivery_number: orderData.delivery_number || null,
+              delivery_neighborhood: orderData.delivery_neighborhood || null,
+              subtotal,
+              delivery_fee: deliveryFee,
+              discount: 0,
+              total,
+              observations: orderData.observations || `Pedido via WhatsApp`,
+            })
+            .select()
+            .single();
 
           if (order) {
             const items = orderData.items.map((i: any) => ({
@@ -300,22 +336,19 @@ INSTRUÇÕES:
     // Send reply via WhatsApp API
     if (WA_TOKEN && WA_PHONE_ID) {
       try {
-        const waRes = await fetch(
-          `https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${WA_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              messaging_product: "whatsapp",
-              to: from,
-              type: "text",
-              text: { body: aiResponse },
-            }),
-          }
-        );
+        const waRes = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${WA_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            to: from,
+            type: "text",
+            text: { body: aiResponse },
+          }),
+        });
         if (!waRes.ok) {
           console.error("WhatsApp send error:", waRes.status, await waRes.text());
         }
