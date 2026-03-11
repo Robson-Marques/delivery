@@ -13,12 +13,15 @@ serve(async (req) => {
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const WA_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-  const WA_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-  const WA_VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN");
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+  // Read WhatsApp config from DB, fallback to env vars
+  const { data: waConfig } = await supabase.from("whatsapp_config").select("*").limit(1).single();
+  const WA_TOKEN = waConfig?.access_token || Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+  const WA_PHONE_ID = waConfig?.phone_number_id || Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+  const WA_VERIFY_TOKEN = waConfig?.verify_token || Deno.env.get("WHATSAPP_VERIFY_TOKEN");
 
   // ====== WEBHOOK VERIFICATION (GET) ======
   if (req.method === "GET") {

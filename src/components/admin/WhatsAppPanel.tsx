@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { MessageSquare, Phone, ArrowUpRight, ArrowDownLeft, Search, RefreshCw } from 'lucide-react';
+import { MessageSquare, Phone, ArrowUpRight, ArrowDownLeft, Search, RefreshCw, Settings, Eye, EyeOff, Save } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface WhatsAppMessage {
   id: string;
