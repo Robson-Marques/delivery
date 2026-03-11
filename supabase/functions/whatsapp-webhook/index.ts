@@ -189,6 +189,17 @@ serve(async (req) => {
 
       return currentTime >= openTime && currentTime < closeTime;
     })();
+    // LOGS TEMPORÁRIOS - remova depois de resolver
+    console.log("=== DEBUG HORÁRIO ===");
+    console.log("is_open no banco:", settings?.is_open);
+    console.log("opening_hours:", JSON.stringify(settings?.opening_hours));
+    console.log("isOpen calculado:", isOpen);
+
+    const now = new Date();
+    const nowBrasilia = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    console.log("Hora Brasília:", nowBrasilia.toISOString());
+    console.log("Dia semana:", nowBrasilia.getDay());
+    console.log("====================");
 
     const systemPrompt = `Você é o assistente virtual do ${settings?.name || "nosso restaurante"} no WhatsApp. Responda de forma amigável, concisa e em português brasileiro.
 
