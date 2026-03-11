@@ -42,12 +42,10 @@ serve(async (req) => {
   try {
     const body = await req.json();
 
-    // Meta sends a specific structure
     const entry = body?.entry?.[0];
     const changes = entry?.changes?.[0];
     const value = changes?.value;
 
-    // Check if it's a message (not a status update)
     if (!value?.messages?.[0]) {
       return new Response(JSON.stringify({ status: "ok" }), {
         status: 200,
@@ -56,7 +54,7 @@ serve(async (req) => {
     }
 
     const msg = value.messages[0];
-    const from = msg.from; // phone number
+    const from = msg.from;
     const messageText = msg.text?.body || "";
     const waMessageId = msg.id;
     const contactName = value.contacts?.[0]?.profile?.name || from;
@@ -149,12 +147,15 @@ serve(async (req) => {
       .map((o: any) => `Pedido #${o.order_number}: ${o.status} - R$${Number(o.total).toFixed(2)} (${o.order_type})`)
       .join("\n");
 
+    // ====== CÁLCULO DE HORÁRIO (UTC-3 manual) ======
     const isOpen = (() => {
+      // Admin forçou fechamento manual
       if (settings?.is_open === false) return false;
 
       const hours =
         typeof settings?.opening_hours === "string" ? JSON.parse(settings.opening_hours) : settings?.opening_hours;
 
+      // Sem horários configurados ou auto_toggle desligado, segue is_open do banco
       if (!hours || !hours.auto_toggle) return settings?.is_open ?? false;
 
       const dayMap: Record<number, string> = {
@@ -167,21 +168,25 @@ serve(async (req) => {
         6: "sat",
       };
 
-      // Converte para Brasília manualmente (UTC-3) sem depender de toLocaleString
-      const now = new Date();
-      const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
-      const brasiliaMs = utcMs - 3 * 60 * 60000; // UTC-3
+      // Calcula hora de Brasília manualmente (UTC-3) sem depender de toLocaleString
+      const nowUtcMs = Date.now();
+      const brasiliaMs = nowUtcMs - 3 * 60 * 60 * 1000;
       const nowBrasilia = new Date(brasiliaMs);
 
       const currentDay = dayMap[nowBrasilia.getUTCDay()];
-      const currentTime = nowBrasilia.getUTCHours() * 60 + nowBrasilia.getUTCMinutes();
+      const currentHour = nowBrasilia.getUTCHours();
+      const currentMinute = nowBrasilia.getUTCMinutes();
+      const currentTime = currentHour * 60 + currentMinute;
 
       console.log(
-        `[HORÁRIO] Brasília: ${nowBrasilia.getUTCHours()}:${String(nowBrasilia.getUTCMinutes()).padStart(2, "0")} | Dia: ${currentDay} | Minutos: ${currentTime}`,
+        `[HORÁRIO] Brasília: ${currentHour}:${String(currentMinute).padStart(2, "0")} | Dia: ${currentDay} | Total minutos: ${currentTime}`,
       );
 
       const todayHours = hours?.[currentDay];
-      if (!todayHours || !todayHours.enabled) return false;
+      if (!todayHours || !todayHours.enabled) {
+        console.log(`[HORÁRIO] Dia ${currentDay} desabilitado ou não configurado`);
+        return false;
+      }
 
       const [openH, openM] = todayHours.open.split(":").map(Number);
       const [closeH, closeM] = todayHours.close.split(":").map(Number);
@@ -189,22 +194,11 @@ serve(async (req) => {
       const closeTime = closeH * 60 + closeM;
 
       console.log(
-        `[HORÁRIO] Abertura: ${openTime} | Fechamento: ${closeTime} | Atual: ${currentTime} | Aberto: ${currentTime >= openTime && currentTime < closeTime}`,
+        `[HORÁRIO] Abertura: ${openTime}min | Fechamento: ${closeTime}min | Agora: ${currentTime}min | Aberto: ${currentTime >= openTime && currentTime < closeTime}`,
       );
 
       return currentTime >= openTime && currentTime < closeTime;
     })();
-    // LOGS TEMPORÁRIOS - remova depois de resolver
-    console.log("=== DEBUG HORÁRIO ===");
-    console.log("is_open no banco:", settings?.is_open);
-    console.log("opening_hours:", JSON.stringify(settings?.opening_hours));
-    console.log("isOpen calculado:", isOpen);
-
-    const now = new Date();
-    const nowBrasilia = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-    console.log("Hora Brasília:", nowBrasilia.toISOString());
-    console.log("Dia semana:", nowBrasilia.getDay());
-    console.log("====================");
 
     const systemPrompt = `Você é o assistente virtual do ${settings?.name || "nosso restaurante"} no WhatsApp. Responda de forma amigável, concisa e em português brasileiro.
 
@@ -279,7 +273,6 @@ INSTRUÇÕES:
       try {
         const orderData = JSON.parse(orderMatch[1].trim());
         if (orderData.action === "create_order") {
-          // Find or create customer
           let customerId = customer?.id;
           if (!customerId) {
             const { data: newCust } = await supabase
@@ -296,7 +289,6 @@ INSTRUÇÕES:
             customerId = newCust?.id;
           }
 
-          // Calculate totals
           const subtotal = orderData.items.reduce((s: number, i: any) => s + i.unit_price * i.quantity, 0);
           const deliveryNeighborhood = (neighborhoods || []).find(
             (n: any) => n.name.toLowerCase() === (orderData.delivery_neighborhood || "").toLowerCase(),
@@ -338,7 +330,6 @@ INSTRUÇÕES:
             await supabase.from("order_items").insert(items);
           }
 
-          // Clean the JSON from the response
           aiResponse = aiResponse.replace(/===ORDER_JSON===[\s\S]*?===END_ORDER===/, "").trim();
           if (order) {
             aiResponse += `\n\n✅ *Pedido #${order.order_number} registrado!*\nTotal: R$${Number(total).toFixed(2)}`;
@@ -387,7 +378,7 @@ INSTRUÇÕES:
   } catch (e) {
     console.error("Webhook error:", e);
     return new Response(JSON.stringify({ error: "Internal error" }), {
-      status: 200, // Meta expects 200 to not retry
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
