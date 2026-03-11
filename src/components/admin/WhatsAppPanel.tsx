@@ -18,6 +18,165 @@ interface WhatsAppMessage {
 export function WhatsAppPanel() {
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [tab, setTab] = useState<'conversations' | 'config'>('conversations');
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-heading font-bold text-lg text-foreground flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-success" /> WhatsApp Bot
+        </h2>
+        <div className="flex gap-1">
+          <button onClick={() => setTab('conversations')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${tab === 'conversations' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'}`}>
+            <MessageSquare className="w-3.5 h-3.5 inline mr-1" />Conversas
+          </button>
+          <button onClick={() => setTab('config')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${tab === 'config' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'}`}>
+            <Settings className="w-3.5 h-3.5 inline mr-1" />Configuração
+          </button>
+        </div>
+      </div>
+
+      {tab === 'conversations' ? (
+        <ConversationsTab selectedPhone={selectedPhone} setSelectedPhone={setSelectedPhone} search={search} setSearch={setSearch} />
+      ) : (
+        <ConfigTab />
+      )}
+    </div>
+  );
+}
+
+function ConfigTab() {
+  const queryClient = useQueryClient();
+  const [showToken, setShowToken] = useState(false);
+  const [form, setForm] = useState({ access_token: '', phone_number_id: '', verify_token: '' });
+
+  const { data: config, isLoading } = useQuery({
+    queryKey: ['whatsapp-config'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('whatsapp_config').select('*').limit(1).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (config) {
+      setForm({
+        access_token: config.access_token || '',
+        phone_number_id: config.phone_number_id || '',
+        verify_token: config.verify_token || '',
+      });
+    }
+  }, [config]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!config?.id) throw new Error('Config not found');
+      const { error } = await supabase.from('whatsapp_config').update({
+        access_token: form.access_token,
+        phone_number_id: form.phone_number_id,
+        verify_token: form.verify_token,
+        updated_at: new Date().toISOString(),
+      }).eq('id', config.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-config'] });
+      toast.success('Configuração salva com sucesso!');
+    },
+    onError: () => toast.error('Erro ao salvar configuração'),
+  });
+
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
+
+  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando...</p>;
+
+  return (
+    <div className="space-y-4 max-w-xl">
+      {/* Webhook URL */}
+      <div className="bg-secondary/50 rounded-lg p-4 space-y-1">
+        <p className="text-xs font-medium text-foreground">URL do Webhook (cole no Meta):</p>
+        <div className="flex items-center gap-2">
+          <code className="text-xs bg-background px-2 py-1 rounded border border-border flex-1 overflow-x-auto text-foreground">
+            {webhookUrl}
+          </code>
+          <button onClick={() => { navigator.clipboard.writeText(webhookUrl); toast.success('URL copiada!'); }}
+            className="px-2 py-1 rounded bg-primary text-primary-foreground text-xs">
+            Copiar
+          </button>
+        </div>
+      </div>
+
+      {/* Config form */}
+      <div className="bg-card rounded-xl border border-border p-4 space-y-4">
+        <h3 className="font-medium text-sm text-foreground">Credenciais da API WhatsApp</h3>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Access Token</label>
+            <div className="relative">
+              <input
+                type={showToken ? 'text' : 'password'}
+                value={form.access_token}
+                onChange={e => setForm(f => ({ ...f, access_token: e.target.value }))}
+                placeholder="EAAxxxxxx..."
+                className="w-full pr-10 px-3 py-2 rounded-lg bg-background border border-border text-sm text-foreground focus:outline-none focus:border-primary"
+              />
+              <button type="button" onClick={() => setShowToken(!showToken)}
+                className="absolute right-2 top-2 text-muted-foreground hover:text-foreground">
+                {showToken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Phone Number ID</label>
+            <input
+              type="text"
+              value={form.phone_number_id}
+              onChange={e => setForm(f => ({ ...f, phone_number_id: e.target.value }))}
+              placeholder="1234567890..."
+              className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-foreground focus:outline-none focus:border-primary"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Verify Token</label>
+            <input
+              type="text"
+              value={form.verify_token}
+              onChange={e => setForm(f => ({ ...f, verify_token: e.target.value }))}
+              placeholder="meu_token_secreto"
+              className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-foreground focus:outline-none focus:border-primary"
+            />
+          </div>
+        </div>
+
+        <button
+          onClick={() => saveMutation.mutate()}
+          disabled={saveMutation.isPending}
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {saveMutation.isPending ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Obtenha essas credenciais no <a href="https://developers.facebook.com" target="_blank" rel="noopener" className="text-primary underline">Meta Developers</a> → WhatsApp → API Setup.
+      </p>
+    </div>
+  );
+}
+
+function ConversationsTab({ selectedPhone, setSelectedPhone, search, setSearch }: {
+  selectedPhone: string | null;
+  setSelectedPhone: (p: string | null) => void;
+  search: string;
+  setSearch: (s: string) => void;
+}) {
 
   // Fetch unique conversations
   const { data: conversations = [], refetch } = useQuery({
