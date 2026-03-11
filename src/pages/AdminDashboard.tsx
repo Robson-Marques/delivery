@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
 import { useAutoOpenClose } from '@/hooks/useAutoOpenClose';
 
-type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'analytics' | 'settings';
+type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'analytics' | 'whatsapp' | 'settings';
 
 export default function AdminDashboard() {
   const [view, setView] = useState<AdminView>('orders');
