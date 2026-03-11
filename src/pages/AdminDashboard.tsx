@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ChefHat, BarChart3, Home, LogIn, Package, Settings, FileBarChart, Users, Activity } from 'lucide-react';
+import { ArrowLeft, ChefHat, BarChart3, Home, LogIn, Package, Settings, FileBarChart, Users, Activity, MessageSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { KanbanBoard } from '@/components/admin/KanbanBoard';
 import { DashboardStats } from '@/components/admin/DashboardStats';
@@ -8,11 +8,12 @@ import { ReportsPanel } from '@/components/admin/ReportsPanel';
 import { SettingsPanel } from '@/components/admin/SettingsPanel';
 import { CustomerCRM } from '@/components/admin/CustomerCRM';
 import { AnalyticsPanel } from '@/components/admin/AnalyticsPanel';
+import { WhatsAppPanel } from '@/components/admin/WhatsAppPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNewOrderSound } from '@/hooks/useNewOrderSound';
 import { useAutoOpenClose } from '@/hooks/useAutoOpenClose';
 
-type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'analytics' | 'settings';
+type AdminView = 'dashboard' | 'orders' | 'kitchen' | 'products' | 'reports' | 'customers' | 'analytics' | 'whatsapp' | 'settings';
 
 export default function AdminDashboard() {
   const [view, setView] = useState<AdminView>('orders');
@@ -31,6 +32,7 @@ export default function AdminDashboard() {
     { id: 'reports', label: 'Relatórios', icon: <FileBarChart className="w-4 h-4" /> },
     { id: 'customers', label: 'Clientes', icon: <Users className="w-4 h-4" /> },
     { id: 'analytics', label: 'Analytics', icon: <Activity className="w-4 h-4" /> },
+    { id: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare className="w-4 h-4" /> },
     { id: 'settings', label: 'Config', icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -76,6 +78,7 @@ export default function AdminDashboard() {
         {view === 'reports' && <ReportsPanel />}
         {view === 'customers' && <CustomerCRM />}
         {view === 'analytics' && <AnalyticsPanel />}
+        {view === 'whatsapp' && <WhatsAppPanel />}
         {view === 'settings' && <SettingsPanel />}
       </main>
     </div>
