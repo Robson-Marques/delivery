@@ -234,33 +234,12 @@ function ConversationsTab({ selectedPhone, setSelectedPhone, search, setSearch }
     c.phone.includes(search) || c.lastMessage.toLowerCase().includes(search.toLowerCase())
   );
 
-  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`;
-
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-heading font-bold text-lg text-foreground flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-success" /> WhatsApp Bot
-        </h2>
+      <div className="flex justify-end">
         <button onClick={() => refetch()} className="p-2 rounded-lg hover:bg-secondary">
           <RefreshCw className="w-4 h-4 text-muted-foreground" />
         </button>
-      </div>
-
-      {/* Webhook URL info */}
-      <div className="bg-secondary/50 rounded-lg p-3 space-y-1">
-        <p className="text-xs font-medium text-foreground">URL do Webhook (cole no Meta):</p>
-        <div className="flex items-center gap-2">
-          <code className="text-xs bg-background px-2 py-1 rounded border border-border flex-1 overflow-x-auto text-foreground">
-            {webhookUrl}
-          </code>
-          <button
-            onClick={() => navigator.clipboard.writeText(webhookUrl)}
-            className="px-2 py-1 rounded bg-primary text-primary-foreground text-xs"
-          >
-            Copiar
-          </button>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[400px]">
