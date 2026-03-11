@@ -78,6 +78,7 @@ export default function AdminDashboard() {
         {view === 'reports' && <ReportsPanel />}
         {view === 'customers' && <CustomerCRM />}
         {view === 'analytics' && <AnalyticsPanel />}
+        {view === 'whatsapp' && <WhatsAppPanel />}
         {view === 'settings' && <SettingsPanel />}
       </main>
     </div>
